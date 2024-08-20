@@ -16,6 +16,11 @@ with open(names_path, "r") as f:
     classes = f.read().strip().split("\n")
 
 cap = cv2.VideoCapture(rtsp_url)
+
+# 해상도 설정
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1980)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+
 while True:
     ret, frame = cap.read()
     if not ret:
