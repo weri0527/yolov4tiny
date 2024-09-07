@@ -27,24 +27,25 @@ while True:
         print("RTSP 스트림을 가져올 수 없습니다.")
         break
 
-    # YOLO 입력 크기 지정
+    # 이미지 전처리
+    # 이미지를 416x416 크기로 변경
     blob = cv2.dnn.blobFromImage(frame, 1/255.0, (416, 416), swapRB=True, crop=False)
     model.setInput(blob)
 
     output_layers_names = model.getUnconnectedOutLayersNames()
     layer_outputs = model.forward(output_layers_names)
 
-    boxes = []
-    confidences = []
-    class_ids = []
+    boxes = [] # 객체의 박스 좌표
+    confidences = [] # 탐지된 객체의 신뢰도 
+    class_ids = [] # 탐지된 객체의 클래스 ID
 
     for output in layer_outputs:
-        for detection in output:
+        for detection in output: 
             scores = detection[5:]
             class_id = np.argmax(scores)
             confidence = scores[class_id]
-            if confidence > 0.5:  # 임계값 조정 가능
-                box = detection[0:4] * np.array([frame.shape[1], frame.shape[0], frame.shape[1], frame.shape[0]])
+            if confidence > 0.6:  # 신뢰도가 (0.6)보다 큰 경우만 객체로 인식
+                box = detection[0:4] * np.array([frame.shape[1], frame.shape[0], frame.shape[1], frame.shape[0]]) 
                 (centerX, centerY, width, height) = box.astype("int")
                 
                 x = int(centerX - (width / 2))
@@ -54,8 +55,8 @@ while True:
                 confidences.append(float(confidence))
                 class_ids.append(class_id)
 
-    # Non-maxima Suppression
-    idxs = cv2.dnn.NMSBoxes(boxes, confidences, score_threshold=0.5, nms_threshold=0.4)
+    # 겹치는 객체의 BOX중 가장 신뢰도가 높은 BOX만 남김
+    idxs = cv2.dnn.NMSBoxes(boxes, confidences, score_threshold=0.6, nms_threshold=0.6)
 
     if len(idxs) > 0:
         for i in idxs.flatten():
